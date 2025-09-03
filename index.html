@@ -1,0 +1,177 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Maker Pro</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-docx-js/0.4.1/html-docx.js"></script>
+  <style>
+    body {font-family: Arial, sans-serif; display: flex; gap: 20px; margin: 20px; transition: background 0.3s, color 0.3s;}
+    .form-container, .resume-container {width: 50%; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background: #f9f9f9; transition: background 0.3s, color 0.3s;}
+    input, textarea, select {width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px;}
+    .resume {padding: 20px; border-radius: 10px;}
+    button {margin-top: 10px; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;}
+    #download {background: #007bff; color: white;}
+    #print {background: #28a745; color: white;}
+    #save {background: #ff9800; color: white;}
+    #load {background: #6c757d; color: white;}
+    #toggle-dark {background: #222; color: white;}
+    #exportWord {background: #9c27b0; color: white;}
+    #exportWordATS {background: #009688; color: white;}/* Dark Mode */
+body.dark {background: #121212; color: white;}
+body.dark .form-container, body.dark .resume-container {background: #1e1e1e; border-color: #444;}
+
+/* Templates */
+.template-classic {font-family: Georgia, serif; border-left: 5px solid #444; padding-left: 15px;}
+.template-modern {font-family: Arial, sans-serif; background: #eef6ff; border-left: 5px solid #007bff; padding-left: 15px;}
+.template-creative {font-family: "Trebuchet MS", sans-serif; background: #fff5e6; border: 2px dashed #ff6600; padding: 15px;}
+.template-ats {font-family: Arial, sans-serif; background: #fff; border: none; padding: 0;}
+
+h1 {margin-bottom: 5px;}
+h2 {margin-top: 15px; margin-bottom: 5px; border-bottom: 2px solid #444; padding-bottom: 3px;}
+#profile-pic {max-width: 120px; border-radius: 50%; margin-bottom: 10px;}
+
+  </style>
+</head>
+<body>  <div class="form-container">
+    <h2>Enter Your Details</h2>
+    <label>Profile Picture:</label>
+    <input type="file" id="profile" accept="image/*"><label>Name:</label>
+<input type="text" id="name" placeholder="Your Name">
+
+<label>Email:</label>
+<input type="email" id="email" placeholder="Your Email">
+
+<label>Phone:</label>
+<input type="text" id="phone" placeholder="Your Phone">
+
+<label>Education:</label>
+<textarea id="education" placeholder="Your Education"></textarea>
+
+<label>Experience:</label>
+<textarea id="experience" placeholder="Your Work Experience"></textarea>
+
+<label>Skills:</label>
+<textarea id="skills" placeholder="Your Skills"></textarea>
+
+<label>Choose Template:</label>
+<select id="template">
+  <option value="classic">Classic</option>
+  <option value="modern">Modern</option>
+  <option value="creative">Creative</option>
+  <option value="ats">ATS-Friendly</option>
+</select>
+
+<button id="download">Download PDF</button>
+<button id="print">Print Resume</button>
+<button id="save">Save Resume</button>
+<button id="load">Load Resume</button>
+<button id="toggle-dark">Toggle Dark Mode</button>
+<button id="exportWord">Export Word (Styled)</button>
+<button id="exportWordATS">Export Word (ATS)</button>
+
+  </div>  <div class="resume-container">
+    <h2>Live Preview</h2>
+    <div id="resume" class="resume template-classic">
+      <img id="profile-pic" src="" alt="Profile Picture">
+      <h1 id="r-name">Your Name</h1>
+      <p><strong>Email:</strong> <span id="r-email"></span></p>
+      <p><strong>Phone:</strong> <span id="r-phone"></span></p><h2>Education</h2>
+  <p id="r-education"></p>
+
+  <h2>Experience</h2>
+  <p id="r-experience"></p>
+
+  <h2>Skills</h2>
+  <p id="r-skills"></p>
+</div>
+
+  </div>  <script>
+    const fields = ["name", "email", "phone", "education", "experience", "skills"];
+    fields.forEach(field => {
+      document.getElementById(field).addEventListener("input", () => {
+        document.getElementById("r-" + field).innerText = document.getElementById(field).value;
+      });
+    });
+
+    document.getElementById("template").addEventListener("change", function() {
+      const resume = document.getElementById("resume");
+      resume.className = "resume template-" + this.value;
+    });
+
+    document.getElementById("profile").addEventListener("change", function(e) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        document.getElementById("profile-pic").src = event.target.result;
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    });
+
+    document.getElementById("download").addEventListener("click", () => {
+      const resume = document.getElementById("resume");
+      html2pdf().from(resume).save("Resume.pdf");
+    });
+
+    document.getElementById("print").addEventListener("click", () => {
+      window.print();
+    });
+
+    document.getElementById("save").addEventListener("click", () => {
+      const data = {};
+      fields.forEach(field => data[field] = document.getElementById(field).value);
+      data["template"] = document.getElementById("template").value;
+      data["dark"] = document.body.classList.contains("dark");
+      data["profilePic"] = document.getElementById("profile-pic").src;
+      localStorage.setItem("resumeData", JSON.stringify(data));
+      alert("Resume Saved!");
+    });
+
+    document.getElementById("load").addEventListener("click", () => {
+      const data = JSON.parse(localStorage.getItem("resumeData"));
+      if (data) {
+        fields.forEach(field => {
+          document.getElementById(field).value = data[field];
+          document.getElementById("r-" + field).innerText = data[field];
+        });
+        document.getElementById("template").value = data["template"];
+        document.getElementById("resume").className = "resume template-" + data["template"];
+        if (data["dark"]) document.body.classList.add("dark"); else document.body.classList.remove("dark");
+        if (data["profilePic"]) document.getElementById("profile-pic").src = data["profilePic"];
+        alert("Resume Loaded!");
+      } else {
+        alert("No saved resume found.");
+      }
+    });
+
+    document.getElementById("toggle-dark").addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+    });
+
+    // Export Word (Styled)
+    document.getElementById("exportWord").addEventListener("click", () => {
+      const content = document.getElementById("resume").outerHTML;
+      const converted = htmlDocx.asBlob(content);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(converted);
+      link.download = "Resume_Styled.docx";
+      link.click();
+    });
+
+    // Export Word (ATS)
+    document.getElementById("exportWordATS").addEventListener("click", () => {
+      let atsText = "Resume\n\n";
+      atsText += "Name: " + document.getElementById("name").value + "\n";
+      atsText += "Email: " + document.getElementById("email").value + "\n";
+      atsText += "Phone: " + document.getElementById("phone").value + "\n\n";
+      atsText += "Education:\n" + document.getElementById("education").value + "\n\n";
+      atsText += "Experience:\n" + document.getElementById("experience").value + "\n\n";
+      atsText += "Skills:\n" + document.getElementById("skills").value + "\n";
+
+      const blob = new Blob([atsText], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "Resume_ATS.docx";
+      link.click();
+    });
+  </script></body>
+</html>
